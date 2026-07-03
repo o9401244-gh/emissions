@@ -119,6 +119,8 @@
   /* Scenario country note */
   .scen-note{background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.3);border-radius:7px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start;}
   .scen-note-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+  .scen-note-toggle{background:transparent;border:1px solid rgba(240,192,64,.3);border-radius:4px;color:#d4b84a;font-size:.67rem;cursor:pointer;padding:2px 7px;white-space:nowrap;flex-shrink:0;margin-left:auto;}
+  .scen-note-toggle:hover{background:rgba(240,192,64,.1);}
   .scen-note-text{font-size:.75rem;color:#d4b84a;line-height:1.6;}
   .scen-note-text a{color:#f0c040;text-decoration:underline;}
   .scen-note-text a:hover{color:#fff;}
@@ -270,8 +272,8 @@ function buildCountryList(filter){
   });
 }
 
-function selectCountry(co){country=co;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};buildCountryList(document.getElementById('countrySearch').value);refresh();}
-function selectCat(c){cat=c;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===c);});if(country&&!RAW[cat].countries.includes(country))country=null;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};buildCountryList(document.getElementById('countrySearch').value);if(country)refresh();else showEmpty();}
+function selectCountry(co){country=co;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;buildCountryList(document.getElementById('countrySearch').value);refresh();}
+function selectCat(c){cat=c;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===c);});if(country&&!RAW[cat].countries.includes(country))country=null;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;buildCountryList(document.getElementById('countrySearch').value);if(country)refresh();else showEmpty();}
 
 function showEmpty(){
   document.getElementById('emptyState').style.display='flex';
@@ -536,8 +538,36 @@ function updateScenPanel(){
     if(note){
       noteEl.style.display='flex';
       noteEl.className='scen-note';
-      noteEl.innerHTML='<span class="scen-note-icon">&#128204;</span><span class="scen-note-text">'+note+'</span>';
-    } else {
+      noteEl.style.flexWrap='wrap';
+      noteEl.style.alignItems='flex-start';
+      noteEl.innerHTML='';
+
+      var noteIcon=document.createElement('span');
+      noteIcon.className='scen-note-icon';
+      noteIcon.textContent='\u{1F4CC}';
+
+      var noteToggle=document.createElement('button');
+      noteToggle.className='scen-note-toggle';
+      noteToggle.textContent='Show context \u25BC';
+
+      var noteText=document.createElement('span');
+      noteText.className='scen-note-text';
+      noteText.style.display='none';
+      noteText.style.width='100%';
+      noteText.style.marginTop='6px';
+      noteText.innerHTML=note;
+
+      noteToggle.onclick=function(){
+        var isOpen=noteText.style.display!=='none';
+        noteText.style.display=isOpen?'none':'block';
+        noteToggle.textContent=isOpen?'Show context \u25BC':'Hide \u25B2';
+      };
+
+      noteEl.appendChild(noteIcon);
+      noteEl.appendChild(noteToggle);
+      noteEl.appendChild(noteText);
+
+      } else {
       noteEl.style.display='none';
     }
   }
@@ -969,7 +999,8 @@ function buildFleetDynamicsTable(container) {
   tSlider.oninput = function() {
     fleetDynamics.turnover = parseFloat(this.value);
     tVal.textContent = (fleetDynamics.turnover * 100).toFixed(1) + '%';
-    if (fleetDynamicsActive) { applyPolicyPresetWithStockFlow(activePreset); drawChart(); }
+    if (fleetDynamicsActive) { applyPolicyPresetWithStockFlow(activePreset, true); drawChart(); }
+    else if (Object.keys(propOverrides).length > 0) { var p3=SCENARIO[cat][country]; applyStockFlowFromWaypoints(p3); drawChart(); }
   };
 
   turnoverRow.appendChild(tLabel);
@@ -1068,7 +1099,8 @@ function buildFleetDynamicsTable(container) {
       var total = FUEL_TYPES.reduce(function(s,x){ return s+fleetDynamics.salesShare[x]; }, 0);
       if (total > 0) FUEL_TYPES.forEach(function(x){ fleetDynamics.salesShare[x] /= total; });
       sv.textContent = (fleetDynamics.salesShare[f] * 100).toFixed(1) + '%';
-      if (fleetDynamicsActive) { applyPolicyPresetWithStockFlow(activePreset); drawChart(); }
+      if (fleetDynamicsActive) { applyPolicyPresetWithStockFlow(activePreset, true); drawChart(); }
+      else if (Object.keys(propOverrides).length > 0) { var p2=SCENARIO[cat][country]; applyStockFlowFromWaypoints(p2); drawChart(); }
       else buildPredArea();
     }; })(ft, ssVal);
     ssWrap.appendChild(ssSlider);
@@ -1189,6 +1221,7 @@ const POLICY_PRESETS = {
 var propLocks = {};
 var propOverrides = {};
 var activePreset = null;
+var selectedPropYear = 2026; // year shown in fuel mix sliders
 var policyAchievement = 100; // 0=BAU, 100=target met, 150=accelerated
 var fleetDynamicsActive = false;
 var fleetDynamics = {};
@@ -1271,6 +1304,85 @@ function redistributeProps(movedPred, newVal, yr, preds) {
   }
 }
 
+
+// ── Stock-flow from waypoints ──
+// When the user sets fuel mix proportions at a specific year (waypoint),
+// run the stock-flow model forward AND backward from that year to fill
+// propOverrides for all other forecast years.
+function applyStockFlowFromWaypoints(preds) {
+  if (!fleetDynamics.scrappage) initFleetDynamics();
+
+  // The waypoint: propOverrides at selectedPropYear (set by slider)
+  // Run stock-flow FORWARD from selectedPropYear to 2040
+  // Run stock-flow BACKWARD from selectedPropYear to 2026 (using inverse scrappage)
+
+  var waypointYr = selectedPropYear;
+
+  // Get waypoint fleet stock (proportions at waypointYr)
+  var waypointStock = {};
+  FUEL_TYPES.forEach(function(ft) {
+    var pname = PROP_PRED_MAP[ft];
+    waypointStock[ft] = propOverrides[pname] && propOverrides[pname][waypointYr] != null
+      ? propOverrides[pname][waypointYr]
+      : (preds[pname] ? getBauPropVal(preds[pname], waypointYr) : 0);
+  });
+
+  // Forward pass: waypointYr+1 → 2040
+  var fwdStock = Object.assign({}, waypointStock);
+  for (var yr = waypointYr + 1; yr <= 2040; yr++) {
+    var newStock = {};
+    var total = 0;
+    FUEL_TYPES.forEach(function(ft) {
+      var pname = PROP_PRED_MAP[ft];
+      var ss = fleetDynamics.salesShare[ft];
+      var scrap = fleetDynamics.scrappage[ft];
+      var phaseOutYr = fleetDynamics.phaseOut && fleetDynamics.phaseOut[ft];
+      if (phaseOutYr && yr >= phaseOutYr) {
+        newStock[ft] = 0;
+      } else {
+        newStock[ft] = fwdStock[ft] * (1 - scrap) + fleetDynamics.turnover * ss;
+      }
+      total += newStock[ft];
+    });
+    // Normalize and write to propOverrides
+    FUEL_TYPES.forEach(function(ft) {
+      var pname = PROP_PRED_MAP[ft];
+      if (!propOverrides[pname]) propOverrides[pname] = {};
+      propOverrides[pname][yr] = total > 0 ? newStock[ft] / total : 0;
+    });
+    fwdStock = newStock;
+  }
+
+  // Backward pass: waypointYr-1 → 2026
+  // Inverse stock-flow: stock(t-1) = (stock(t) - turnover*ss) / (1 - scrap)
+  var bwdStock = Object.assign({}, waypointStock);
+  for (var yr2 = waypointYr - 1; yr2 >= 2026; yr2--) {
+    var prevStock = {};
+    var total2 = 0;
+    FUEL_TYPES.forEach(function(ft) {
+      var ss = fleetDynamics.salesShare[ft];
+      var scrap = fleetDynamics.scrappage[ft];
+      var inv = (1 - scrap) > 0 ? (bwdStock[ft] - fleetDynamics.turnover * ss) / (1 - scrap) : bwdStock[ft];
+      prevStock[ft] = Math.max(0, inv);
+      total2 += prevStock[ft];
+    });
+    FUEL_TYPES.forEach(function(ft) {
+      var pname = PROP_PRED_MAP[ft];
+      if (!propOverrides[pname]) propOverrides[pname] = {};
+      propOverrides[pname][yr2] = total2 > 0 ? prevStock[ft] / total2 : 0;
+    });
+    bwdStock = prevStock;
+  }
+
+  // Ensure waypoint year itself is correctly set
+  FUEL_TYPES.forEach(function(ft) {
+    var pname = PROP_PRED_MAP[ft];
+    if (!propOverrides[pname]) propOverrides[pname] = {};
+    propOverrides[pname][waypointYr] = waypointStock[ft];
+  });
+}
+
+
 function buildPropSection(preds, container) {
   if (!fleetDynamics.scrappage) { initFleetDynamics(); }
   var section = document.createElement('div');
@@ -1334,15 +1446,34 @@ function buildPropSection(preds, container) {
   }
 
   var propKeys = Object.keys(preds);
-  var sum2026 = PROP_PREDS.reduce(function(s,p){ return s+(preds[p]?getScenPropVal(p,preds[p],2026):0); }, 0);
+  var sum2026 = PROP_PREDS.reduce(function(s,p){ return s+(preds[p]?getScenPropVal(p,preds[p],selectedPropYear):0); }, 0);
 
   var titleRow = document.createElement('div');
   titleRow.className = 'prop-section-title';
+  titleRow.style.flexWrap = 'wrap';
+  titleRow.style.gap = '8px';
   titleRow.appendChild(document.createTextNode('Fuel Mix Proportions (B-F) '));
+
+  // Year selector
+  var yrSel = document.createElement('select');
+  yrSel.style.cssText = 'background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:.7rem;cursor:pointer;';
+  FORECAST_YEARS.forEach(function(y) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = 'FY'+y;
+    if (y === selectedPropYear) opt.selected = true;
+    yrSel.appendChild(opt);
+  });
+  yrSel.onchange = function() {
+    selectedPropYear = parseInt(this.value);
+    buildPredArea();
+  };
+  titleRow.appendChild(yrSel);
+
+  var sumVal = PROP_PREDS.reduce(function(s,p){ return s+(preds[p]?getScenPropVal(p,preds[p],selectedPropYear):0); }, 0);
   var badge = document.createElement('span');
   badge.id = 'propSumBadge';
-  badge.className = 'prop-sum-badge ' + (Math.abs(sum2026-1)<0.001?'prop-sum-ok':'prop-sum-warn');
-  badge.textContent = 'Sum 2026 = ' + (sum2026*100).toFixed(1) + '%';
+  badge.className = 'prop-sum-badge ' + (Math.abs(sumVal-1)<0.001?'prop-sum-ok':'prop-sum-warn');
+  badge.textContent = 'Sum = ' + (sumVal*100).toFixed(1) + '%';
   titleRow.appendChild(badge);
   section.appendChild(titleRow);
 
@@ -1351,7 +1482,7 @@ function buildPropSection(preds, container) {
     if (!pinfo) return;
     var letterIdx = propKeys.indexOf(pname);
     var letter = String.fromCharCode(65+letterIdx);
-    var val2026 = getScenPropVal(pname, pinfo, 2026);
+    var val2026 = getScenPropVal(pname, pinfo, selectedPropYear);
     var isLocked = !!propLocks[pname];
     var shortName = pname.replace('Proportion of Vehicles that are ','');
 
@@ -1386,7 +1517,10 @@ function buildPropSection(preds, container) {
     slider.oninput = (function(pn){ return function(){
       activePreset = null;
       var v = parseFloat(this.value);
-      FORECAST_YEARS.forEach(function(yr){ redistributeProps(pn, v, yr, preds); });
+      // Apply to selected year only; fleet dynamics fills in other years
+      redistributeProps(pn, v, selectedPropYear, preds);
+      // Run stock-flow from selectedPropYear waypoint to fill other years
+      applyStockFlowFromWaypoints(preds);
       buildPredArea();
       drawChart();
     }; })(pname);
