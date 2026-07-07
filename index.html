@@ -215,6 +215,47 @@
       <canvas id="myChart" style="display:none"></canvas>
     </div>
 
+    <!-- Leasing Cost Chart -->
+    <div id="leasingChartWrap" style="display:none;background:var(--surface);border:1px solid rgba(108,142,255,.3);border-radius:11px;overflow:hidden;">
+      <!-- Header (always visible, clickable to toggle) -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 15px;cursor:pointer;" id="leasingChartHdr">
+        <div>
+          <div style="font-size:.86rem;font-weight:700;color:var(--accent);" id="leasingChartTitle">Estimated Leasing Cost</div>
+          <div style="font-size:.71rem;color:var(--muted);margin-top:1px;" id="leasingChartSub">USD · Estimated TCO × R</div>
+        </div>
+        <span id="leasingChevron" style="color:var(--muted);font-size:.75rem;transition:transform .2s;">&#9660;</span>
+      </div>
+      <!-- Body (collapsible) -->
+      <div id="leasingChartBody" style="padding:0 15px 14px;display:none;">
+        <!-- Controls row -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px;gap:2px;">
+            <button id="leasingTotalBtn" class="tbtn active" style="font-size:.7rem;padding:3px 8px;">Total Fleet</button>
+            <button id="leasingPerVehicleBtn" class="tbtn" style="font-size:.7rem;padding:3px 8px;">Per Vehicle</button>
+          </div>
+          <span style="font-size:.72rem;color:var(--muted);">R (Leasing/TCO):</span>
+          <input type="range" id="leasingRSlider" min="0.30" max="0.70" step="0.01" value="0.50"
+            style="width:100px;accent-color:var(--scen);cursor:pointer;">
+          <span id="leasingRVal" style="font-size:.73rem;color:var(--scen);font-weight:600;width:36px;">50%</span>
+          <div style="display:flex;gap:10px;align-items:center;margin-left:8px;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);"><div style="width:16px;height:0;border-top:2.5px solid var(--hist);"></div>Historical</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);"><div style="width:16px;height:0;border-top:2.5px dashed var(--pred);"></div>BAU</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);" id="leasingScenLegend"><div style="width:16px;height:0;border-top:2.5px dashed var(--scen);"></div>Scenario</div>
+          </div>
+        </div>
+        <div style="position:relative;height:220px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;">
+          <canvas id="leasingChart"></canvas>
+        </div>
+        <div style="font-size:.67rem;color:var(--muted);margin-top:8px;line-height:1.5;">
+          ⚠ Estimated values. Sources:
+          <a href="https://www.ayvens.com/en-cp/blog/total-cost-of-ownership/car-cost-index-2025/" target="_blank" style="color:var(--muted);">Ayvens 2025</a> (Italy, Poland);
+          <a href="https://www.globalfleet.com/en/financial-models-fleet-strategy/latin-america/news/whats-tco-brazilian-car" target="_blank" style="color:var(--muted);">Global Fleet/Zumpy</a> (Brazil);
+          <a href="https://www.ceew.in/publications/cost-of-ownership-for-road-transport-sector" target="_blank" style="color:var(--muted);">CEEW 2024</a> (India); regional derivation (Mexico).
+          R = leasing payment as share of total monthly cost (<a href="https://www.arval.com/vehicle-s-total-cost-of-ownership-outlook-amo" target="_blank" style="color:var(--muted);">Arval: 40–60% typical</a>).
+        </div>
+      </div>
+    </div>
+
     <div class="scen-panel" id="scenPanel" style="display:none">
       <div class="scen-hdr" id="scenHdr">
         <div>
@@ -272,8 +313,8 @@ function buildCountryList(filter){
   });
 }
 
-function selectCountry(co){country=co;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';buildCountryList(document.getElementById('countrySearch').value);refresh();}
-function selectCat(c){cat=c;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===c);});if(country&&!RAW[cat].countries.includes(country))country=null;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';buildCountryList(document.getElementById('countrySearch').value);if(country)refresh();else showEmpty();}
+function selectCountry(co){country=co;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';leasingR=LEASING_R_DEFAULT[country]||0.50;buildCountryList(document.getElementById('countrySearch').value);refresh();}
+function selectCat(c){cat=c;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===c);});if(country&&!RAW[cat].countries.includes(country))country=null;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';leasingR=LEASING_R_DEFAULT[country]||0.50;buildCountryList(document.getElementById('countrySearch').value);if(country)refresh();else showEmpty();}
 
 function showEmpty(){
   document.getElementById('emptyState').style.display='flex';
@@ -428,7 +469,6 @@ function calcScenario(){
 
 function refresh(){
   if(!country){showEmpty();return;}
-  // Auto-apply policy preset before drawing chart (if first visit to this country)
   if(activeView==='bau' && cat==='leased_cars' && POLICY_PRESETS[country] && hasScen(cat,country) && gran==='annual'){
     policyAchievement=100;
     initFleetDynamics();
@@ -438,6 +478,7 @@ function refresh(){
     activeView='preset';
   }
   drawChart();
+  drawLeasingChart();
   updateScenPanel();
 }
 
@@ -1447,10 +1488,192 @@ function markCustomized() {
     customState = takeSnapshot();
     activeView = 'custom';
   } else if (activeView === 'custom') {
-    // Already custom - just update the custom snapshot
     customState = takeSnapshot();
   }
+  // Update leasing chart whenever scenario changes
+  drawLeasingChart();
 }
+
+
+// ── Leasing Cost Model ──
+// TCO per vehicle per quarter (USD) by country and fuel type
+// Sources: Ayvens 2025/2026 Car Cost Index (Italy, Poland); Zumpy/Global Fleet (Brazil);
+// CEEW 2024 per-km analysis (India); Regional derivation (Mexico)
+const LEASING_TCO = {
+  'Italy':  { 'Petrol':3402,'Diesel':3499,'Electric':3726,'Ethanol':3402,'Natural Gas':3175 },
+  'Poland': { 'Petrol':2657,'Diesel':2722,'Electric':2916,'Ethanol':2657,'Natural Gas':2527 },
+  'Brazil': { 'Petrol':888, 'Diesel':930, 'Electric':840, 'Ethanol':855, 'Natural Gas':810  },
+  'India':  { 'Petrol':115, 'Diesel':96,  'Electric':46,  'Ethanol':100, 'Natural Gas':84   },
+  'Mexico': { 'Petrol':1200,'Diesel':1245,'Electric':1140,'Ethanol':1185,'Natural Gas':1110 },
+};
+const LEASING_R_DEFAULT = { 'Italy':0.50,'Poland':0.50,'Brazil':0.50,'India':0.50,'Mexico':0.50 };
+var leasingR = 0.50; // current R slider value
+var leasingChartInst = null;
+var leasingPerVehicle = false; // false=total fleet, true=per vehicle
+
+// ── Leasing Cost Chart ──
+function calcLeasingEmissions(propOverridesForYear) {
+  // Returns annual leasing cost for a given year using propOverrides or BAU
+  // propOverridesForYear: { fuelType -> proportion } or null for BAU
+  if (!LEASING_TCO[country]) return null;
+  var tco = LEASING_TCO[country];
+  var preds = SCENARIO[cat][country];
+  if (!preds) return null;
+  return null; // placeholder - computed in drawLeasingChart
+}
+
+function drawLeasingChart() {
+  var wrap = document.getElementById('leasingChartWrap');
+  if (!wrap) return;
+
+  // Only show for leased_cars with TCO data
+  if (cat !== 'leased_cars' || !LEASING_TCO[country] || !hasScen(cat,country) || gran !== 'annual') {
+    wrap.style.display = 'none';
+    if (leasingChartInst) { leasingChartInst.destroy(); leasingChartInst = null; }
+    return;
+  }
+  wrap.style.display = 'block';
+
+  var tco = LEASING_TCO[country];
+  var preds = SCENARIO[cat][country];
+  var FUEL_MAP = {
+    'Petrol': 'Proportion of Vehicles that are Petrol',
+    'Diesel': 'Proportion of Vehicles that are Diesel',
+    'Electric': 'Proportion of Vehicles that are Electric',
+    'Ethanol': 'Proportion of Vehicles that are Ethanol',
+    'Natural Gas': 'Proportion of Vehicles that are Natural Gas',
+  };
+
+  // Get all years from emissions chart
+  var rawRows = RAW[cat].rows.filter(function(r){return r.country===country;});
+  var years = [...new Set(rawRows.map(function(r){return r.year;}))].sort(function(a,b){return a-b;});
+  var labels = years.map(function(y){return String(y);});
+
+  function calcAnnualCost(yr, useOverrides) {
+    // A: use getAdjVal so it respects user overrides on Vehicle Count slider
+    var pinfo_A = preds['Vehicle Count in 10k'];
+    var A_vals = ['Q1','Q2','Q3','Q4'].map(function(q){
+      return useOverrides ? getAdjVal('Vehicle Count in 10k', pinfo_A, yr, q)
+                          : (function(){ var r=pinfo_A.forecast.find(function(x){return x.year===yr&&x.quarter===q;})||pinfo_A.historical.find(function(x){return x.year===yr&&x.quarter===q;}); return r?r.value:null; })();
+    }).filter(function(v){return v!=null;});
+    if (!A_vals.length) return null;
+    var A = A_vals.reduce(function(s,v){return s+v;},0) / A_vals.length;
+
+    var cost = 0;
+    Object.keys(FUEL_MAP).forEach(function(ft) {
+      var pname = FUEL_MAP[ft];
+      var prop;
+      if (useOverrides && propOverrides[pname] && propOverrides[pname][yr] != null) {
+        prop = propOverrides[pname][yr];
+      } else {
+        var pinfo = preds[pname];
+        var rows = (pinfo.forecast.filter(function(r){return r.year===yr;}));
+        if (!rows.length) rows = pinfo.historical.filter(function(r){return r.year===yr;});
+        prop = rows.length ? rows.reduce(function(s,r){return s+r.value;},0)/rows.length : 0;
+      }
+      cost += prop * (tco[ft] || 0);
+    });
+
+    // Annual fleet cost = A * weighted_TCO_per_vehicle * 10000 * 4 quarters * R
+    var annualFleet = A * cost * 10000 * 4 * leasingR;
+    if (leasingPerVehicle) {
+      // Per vehicle = total fleet / number of vehicles
+      var numVehicles = A * 10000;
+      return numVehicles > 0 ? annualFleet / numVehicles : 0;
+    }
+    return annualFleet;
+  }
+
+  var histYears = [...new Set(preds['Vehicle Count in 10k'].historical.map(function(r){return r.year;}))];
+  var histData = years.map(function(yr) {
+    return histYears.includes(yr) ? calcAnnualCost(yr, false) : null;
+  });
+  var bauData = years.map(function(yr) {
+    if (histYears.includes(yr)) return null;
+    return calcAnnualCost(yr, false);
+  });
+  var scenData = null;
+  if (Object.keys(propOverrides).length > 0) {
+    scenData = years.map(function(yr) {
+      if (histYears.includes(yr)) return null;
+      return calcAnnualCost(yr, true);
+    });
+    // Bridge
+    var firstFcst = years.findIndex(function(y){return !histYears.includes(y);});
+    if (firstFcst > 0) {
+      scenData[firstFcst-1] = histData[firstFcst-1];
+    }
+  }
+  // Bridge: connect last historical point to BAU forecast line
+  // Find the last year that has a valid histData value
+  var lastHistDataIdx = -1;
+  for (var hi = histData.length-1; hi >= 0; hi--) {
+    if (histData[hi] != null) { lastHistDataIdx = hi; break; }
+  }
+  // Find the first year that has a valid bauData value  
+  var firstBauDataIdx = -1;
+  for (var bi = 0; bi < bauData.length; bi++) {
+    if (bauData[bi] != null) { firstBauDataIdx = bi; break; }
+  }
+  // Bridge: set bauData at lastHistDataIdx to histData value
+  if (lastHistDataIdx >= 0) {
+    bauData[lastHistDataIdx] = histData[lastHistDataIdx];
+  }
+
+  document.getElementById('leasingChartTitle').textContent = country + ' — Estimated Leasing Cost';
+  document.getElementById('leasingChartSub').textContent = leasingPerVehicle
+    ? 'USD / vehicle / year · Weighted avg TCO × 4 quarters × R'
+    : 'USD / year (total fleet) · A × 10,000 × weighted TCO × 4 quarters × R';
+  document.getElementById('leasingRVal').textContent = Math.round(leasingR*100) + '%';
+
+  var scenLegend = document.getElementById('leasingScenLegend');
+  if (scenLegend) scenLegend.style.display = scenData ? 'flex' : 'none';
+
+  if (leasingChartInst) leasingChartInst.destroy();
+  var ctx = document.getElementById('leasingChart').getContext('2d');
+
+  var datasets = [
+    {label:'Historical',data:histData,borderColor:'#6c8eff',borderWidth:2.5,pointRadius:3,
+     pointBackgroundColor:'#6c8eff',tension:.35,fill:false,spanGaps:false},
+    {label:'BAU Forecast',data:bauData,borderColor:'#ff7c6c',borderWidth:2.5,borderDash:[6,4],
+     pointRadius:3,pointBackgroundColor:'#ff7c6c',tension:.35,fill:false,spanGaps:true},
+  ];
+  if (scenData) {
+    datasets.push({label:'Scenario',data:scenData,borderColor:'#4ecb8d',borderWidth:2.5,
+     borderDash:[5,3],pointRadius:3,pointBackgroundColor:'#4ecb8d',tension:.35,fill:false,spanGaps:false});
+  }
+
+  leasingChartInst = new Chart(ctx, {
+    type:'line', data:{labels:labels, datasets:datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1a1d27',borderColor:'#2e3350',borderWidth:1,
+          titleColor:'#e8eaf0',bodyColor:'#8890aa',padding:10,
+          callbacks:{label:function(c){
+            if(c.raw===null)return null;
+            var unit = leasingPerVehicle ? ' /vehicle/yr' : ' /yr';
+            return '  '+c.dataset.label+': USD '+fmt(c.raw)+unit;
+          }}
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(46,51,80,0.5)',drawTicks:false},
+           ticks:{color:'#8890aa',font:{size:10},maxTicksLimit:12,maxRotation:45},
+           border:{display:false}},
+        y:{grid:{color:'rgba(46,51,80,0.5)',drawTicks:false},
+           ticks:{color:'#8890aa',font:{size:10},callback:function(v){return 'USD '+fmt(v);}},
+           border:{display:false},
+           title:{display:true,text:leasingPerVehicle?'USD / vehicle / year':'USD / year (fleet)',color:'#8890aa',font:{size:10}}}
+      },
+      animation:{duration:200}
+    }
+  });
+}
+
 
 function buildPropSection(preds, container) {
   if (!fleetDynamics.scrappage) { initFleetDynamics(); }
@@ -1989,6 +2212,47 @@ function setModeBtn(id){['mUniform','mAgr','mYby','mUgr'].forEach(function(x){do
 document.getElementById('resetAll').onclick=function(){overrides={};if(country){buildPredArea();drawChart();}};
 
 buildCountryList('');
+
+// Leasing chart header toggle
+var leasingHdr = document.getElementById('leasingChartHdr');
+if (leasingHdr) {
+  leasingHdr.onclick = function() {
+    var body = document.getElementById('leasingChartBody');
+    var chev = document.getElementById('leasingChevron');
+    var isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+    if (!isOpen) drawLeasingChart(); // redraw when expanding
+  };
+}
+// Toggle buttons (in body, no propagation issue)
+var leasingTotalBtn = document.getElementById('leasingTotalBtn');
+var leasingPVBtn = document.getElementById('leasingPerVehicleBtn');
+if (leasingTotalBtn) {
+  leasingTotalBtn.onclick = function() {
+    leasingPerVehicle = false;
+    leasingTotalBtn.className = 'tbtn active';
+    leasingPVBtn.className = 'tbtn';
+    drawLeasingChart();
+  };
+}
+if (leasingPVBtn) {
+  leasingPVBtn.onclick = function() {
+    leasingPerVehicle = true;
+    leasingPVBtn.className = 'tbtn active';
+    leasingTotalBtn.className = 'tbtn';
+    drawLeasingChart();
+  };
+}
+// R slider
+var rSlider = document.getElementById('leasingRSlider');
+if (rSlider) {
+  rSlider.oninput = function() {
+    leasingR = parseFloat(this.value);
+    document.getElementById('leasingRVal').textContent = Math.round(leasingR*100) + '%';
+    drawLeasingChart();
+  };
+}
 </script>
 </body>
 </html>
