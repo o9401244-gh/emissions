@@ -221,27 +221,67 @@
       <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 15px;cursor:pointer;" id="leasingChartHdr">
         <div>
           <div style="font-size:.86rem;font-weight:700;color:var(--accent);" id="leasingChartTitle">Estimated Leasing Cost</div>
-          <div style="font-size:.71rem;color:var(--muted);margin-top:1px;" id="leasingChartSub">USD · Estimated TCO × R</div>
+          <div id="leasingChartSub" style="margin-top:4px;">
+            <div class="eq-bar" style="margin-bottom:0;background:transparent;border:none;padding:2px 0;flex-wrap:wrap;">
+              <span class="eq-label">Total Fleet:</span>
+              <span class="eq-text">
+                <span class="eq-op">Leasing Cost = </span>
+                <span class="eq-var">A</span>
+                <span class="eq-op"> &times; (</span>
+                <span class="eq-var">B</span><span class="eq-op">&times;</span><span class="eq-var">L</span><span class="eq-op">&times;</span><span class="eq-var">R&#x2097;</span>
+                <span class="eq-op"> + </span>
+                <span class="eq-var">C</span><span class="eq-op">&times;</span><span class="eq-var">M</span><span class="eq-op">&times;</span><span class="eq-var">R&#x2098;</span>
+                <span class="eq-op"> + </span>
+                <span class="eq-var">D</span><span class="eq-op">&times;</span><span class="eq-var">S</span><span class="eq-op">&times;</span><span class="eq-var">R&#x209B;</span>
+                <span class="eq-op"> + </span>
+                <span class="eq-var">E</span><span class="eq-op">&times;</span><span class="eq-var">T</span><span class="eq-op">&times;</span><span class="eq-var">R&#x209C;</span>
+                <span class="eq-op"> + </span>
+                <span class="eq-var">F</span><span class="eq-op">&times;</span><span class="eq-var">U</span><span class="eq-op">&times;</span><span class="eq-var">R&#x1D64;</span>
+                <span class="eq-op">) &times; 10,000 &times; 4</span>
+              </span>
+              <span style="color:var(--border);margin:0 6px;">|</span>
+              <span class="eq-label">Per Vehicle:</span>
+              <span class="eq-text">
+                <span class="eq-op">÷ (</span>
+                <span class="eq-var">A</span>
+                <span class="eq-op"> &times; 10,000)</span>
+              </span>
+              <span style="color:var(--border);margin:0 6px;">|</span>
+              <span class="eq-text" style="font-size:.72rem;color:var(--muted);">
+                <span class="eq-var" style="font-size:.65rem;">L–U</span><span style="color:var(--muted);"> TCO per fuel (quarterly, USD/vehicle) &nbsp;</span>
+                <span class="eq-var" style="font-size:.65rem;">R</span><span style="color:var(--muted);"> Leasing/TCO ratio per fuel</span>
+              </span>
+            </div>
+          </div>
         </div>
         <span id="leasingChevron" style="color:var(--muted);font-size:.75rem;transition:transform .2s;">&#9660;</span>
       </div>
       <!-- Body (collapsible) -->
       <div id="leasingChartBody" style="padding:0 15px 14px;display:none;">
         <!-- Controls row -->
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:10px;">
-          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px;gap:2px;">
-            <button id="leasingTotalBtn" class="tbtn active" style="font-size:.7rem;padding:3px 8px;">Total Fleet</button>
-            <button id="leasingPerVehicleBtn" class="tbtn" style="font-size:.7rem;padding:3px 8px;">Per Vehicle</button>
+        <div style="margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+          <!-- Toggle + legend row -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px;gap:2px;">
+              <button id="leasingTotalBtn" class="tbtn active" style="font-size:.7rem;padding:3px 8px;">Total Fleet</button>
+              <button id="leasingPerVehicleBtn" class="tbtn" style="font-size:.7rem;padding:3px 8px;">Per Vehicle</button>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;margin-left:8px;">
+              <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);"><div style="width:16px;height:0;border-top:2.5px solid var(--hist);"></div>Historical</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);"><div style="width:16px;height:0;border-top:2.5px dashed var(--pred);"></div>BAU</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);" id="leasingScenLegend"><div style="width:16px;height:0;border-top:2.5px dashed var(--scen);"></div>Scenario</div>
+            </div>
           </div>
-          <span style="font-size:.72rem;color:var(--muted);">R (Leasing/TCO):</span>
-          <input type="range" id="leasingRSlider" min="0.30" max="0.70" step="0.01" value="0.50"
-            style="width:100px;accent-color:var(--scen);cursor:pointer;">
-          <span id="leasingRVal" style="font-size:.73rem;color:var(--scen);font-weight:600;width:36px;">50%</span>
-          <div style="display:flex;gap:10px;align-items:center;margin-left:8px;">
-            <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);"><div style="width:16px;height:0;border-top:2.5px solid var(--hist);"></div>Historical</div>
-            <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);"><div style="width:16px;height:0;border-top:2.5px dashed var(--pred);"></div>BAU</div>
-            <div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);" id="leasingScenLegend"><div style="width:16px;height:0;border-top:2.5px dashed var(--scen);"></div>Scenario</div>
+          <!-- Per-fuel TCO and R sliders -->
+          <div style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px;">TCO &amp; Leasing Ratio by Fuel Type</div>
+          <div style="font-size:.67rem;color:var(--muted);margin-bottom:8px;line-height:1.5;">
+            <strong style="color:var(--text);">TCO (Total Cost of Ownership)</strong> is the quarterly all-in cost per vehicle including purchase/depreciation, financing, maintenance, fuel/charging, insurance and taxes. <strong style="color:var(--text);">R</strong> is the share of TCO that becomes the leasing price paid by the lessee (typically 40–60%, per Arval).
           </div>
+          <div style="display:grid;grid-template-columns:80px 1fr 60px 1fr 52px;align-items:center;gap:4px 8px;font-size:.7rem;color:var(--muted);margin-bottom:4px;">
+            <span>Fuel</span><span>TCO (USD/vehicle/qtr)</span><span id="leasingTcoVal_hdr" style="text-align:right;"></span>
+            <span>R (Leasing/TCO)</span><span id="leasingRVal_hdr" style="text-align:right;"></span>
+          </div>
+          <div id="leasingFuelRows"></div>
         </div>
         <div style="position:relative;height:220px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;">
           <canvas id="leasingChart"></canvas>
@@ -304,8 +344,8 @@ function buildCountryList(filter){
   });
 }
 
-function selectCountry(co){country=co;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';leasingR=LEASING_R_DEFAULT[country]||0.50;buildCountryList(document.getElementById('countrySearch').value);refresh();}
-function selectCat(c){cat=c;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===c);});if(country&&!RAW[cat].countries.includes(country))country=null;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';leasingR=LEASING_R_DEFAULT[country]||0.50;buildCountryList(document.getElementById('countrySearch').value);if(country)refresh();else showEmpty();}
+function selectCountry(co){country=co;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';leasingRByFuel={};leasingTCOOverrides[country]=null;buildCountryList(document.getElementById('countrySearch').value);refresh();}
+function selectCat(c){cat=c;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.toggle('active',b.dataset.cat===c);});if(country&&!RAW[cat].countries.includes(country))country=null;overrides={};propOverrides={};propLocks={};activePreset=null;policyAchievement=100;fleetDynamicsActive=false;fleetDynamics={};selectedPropYear=2026;presetState=null;customState=null;activeView='bau';leasingRByFuel={};leasingTCOOverrides[country]=null;buildCountryList(document.getElementById('countrySearch').value);if(country)refresh();else showEmpty();}
 
 function showEmpty(){
   document.getElementById('emptyState').style.display='flex';
@@ -1513,9 +1553,97 @@ const LEASING_TCO = {
   'Mexico': { 'Petrol':1200,'Diesel':1245,'Electric':1140,'Ethanol':1185,'Natural Gas':1110 },
 };
 const LEASING_R_DEFAULT = { 'Italy':0.50,'Poland':0.50,'Brazil':0.50,'India':0.50,'Mexico':0.50 };
-var leasingR = 0.50; // current R slider value
+// Per-fuel TCO overrides (USD/vehicle/quarter) — defaults from LEASING_TCO
+var leasingTCOOverrides = {}; // { country: { ft: value } }
+// Per-fuel R overrides — defaults from LEASING_R_DEFAULT
+var leasingRByFuel = {}; // { ft: value }
 var leasingChartInst = null;
 var leasingPerVehicle = false; // false=total fleet, true=per vehicle
+
+function getLeasingTCO(ft) {
+  if (leasingTCOOverrides[country] && leasingTCOOverrides[country][ft] != null)
+    return leasingTCOOverrides[country][ft];
+  return LEASING_TCO[country] ? (LEASING_TCO[country][ft] || 0) : 0;
+}
+function getLeasingR(ft) {
+  if (leasingRByFuel[ft] != null) return leasingRByFuel[ft];
+  return LEASING_R_DEFAULT[country] || 0.50;
+}
+function resetLeasingSliders() {
+  leasingTCOOverrides[country] = null;
+  leasingRByFuel = {};
+  buildLeasingFuelRows();
+}
+
+function buildLeasingFuelRows() {
+  var container = document.getElementById('leasingFuelRows');
+  if (!container) return;
+  if (!country || !LEASING_TCO[country]) { container.innerHTML = ''; return; }
+  var fuels = ['Petrol','Diesel','Electric','Ethanol','Natural Gas'];
+  var tcoLetters = {'Petrol':'L','Diesel':'M','Electric':'S','Ethanol':'T','Natural Gas':'U'};
+  var rLetters   = {'Petrol':'Rₗ','Diesel':'Rₘ','Electric':'R_s','Ethanol':'R_t','Natural Gas':'R_u'};
+  container.innerHTML = '';
+  fuels.forEach(function(ft) {
+    var tcoVal = getLeasingTCO(ft);
+    var rVal   = getLeasingR(ft);
+    var row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:80px 1fr 60px 1fr 52px;align-items:center;gap:4px 8px;margin-bottom:5px;';
+
+    // Fuel label with letter badge
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text);';
+    lbl.innerHTML = '<span class="var-badge" style="font-size:.6rem;">' + tcoLetters[ft] + '</span>' + ft;
+    row.appendChild(lbl);
+
+    // TCO slider: range 50% to 200% of default, step 10
+    var tcoDefault = LEASING_TCO[country][ft] || 0;
+    var tcoMin = Math.max(1, Math.round(tcoDefault * 0.3));
+    var tcoMax = Math.round(tcoDefault * 2.5);
+    var tcoSlider = document.createElement('input');
+    tcoSlider.type = 'range'; tcoSlider.min = tcoMin; tcoSlider.max = tcoMax;
+    tcoSlider.step = Math.max(1, Math.round(tcoDefault * 0.01));
+    tcoSlider.value = tcoVal;
+    tcoSlider.style.cssText = 'width:100%;accent-color:var(--accent);cursor:pointer;';
+    tcoSlider.dataset.ft = ft;
+    tcoSlider.id = 'tcoSlider_' + ft.replace(' ','_');
+    row.appendChild(tcoSlider);
+
+    var tcoDisplay = document.createElement('span');
+    tcoDisplay.style.cssText = 'font-size:.7rem;color:var(--accent);font-weight:600;text-align:right;';
+    tcoDisplay.textContent = '$' + Math.round(tcoVal);
+    tcoDisplay.id = 'tcoVal_' + ft.replace(' ','_');
+    row.appendChild(tcoDisplay);
+
+    // R slider: 0.20–0.80
+    var rSlider = document.createElement('input');
+    rSlider.type = 'range'; rSlider.min = '0.20'; rSlider.max = '0.80'; rSlider.step = '0.01';
+    rSlider.value = rVal;
+    rSlider.style.cssText = 'width:100%;accent-color:var(--scen);cursor:pointer;';
+    rSlider.dataset.ft = ft;
+    rSlider.id = 'rSlider_' + ft.replace(' ','_');
+    row.appendChild(rSlider);
+
+    var rDisplay = document.createElement('span');
+    rDisplay.style.cssText = 'font-size:.7rem;color:var(--scen);font-weight:600;text-align:right;';
+    rDisplay.textContent = Math.round(rVal * 100) + '%';
+    rDisplay.id = 'rVal_' + ft.replace(' ','_');
+    row.appendChild(rDisplay);
+
+    container.appendChild(row);
+
+    tcoSlider.oninput = function() {
+      if (!leasingTCOOverrides[country]) leasingTCOOverrides[country] = {};
+      leasingTCOOverrides[country][this.dataset.ft] = parseFloat(this.value);
+      document.getElementById('tcoVal_' + this.dataset.ft.replace(' ','_')).textContent = '$' + Math.round(this.value);
+      drawLeasingChart();
+    };
+    rSlider.oninput = function() {
+      leasingRByFuel[this.dataset.ft] = parseFloat(this.value);
+      document.getElementById('rVal_' + this.dataset.ft.replace(' ','_')).textContent = Math.round(this.value * 100) + '%';
+      drawLeasingChart();
+    };
+  });
+}
 
 // ── Leasing Cost Chart ──
 function calcLeasingEmissions(propOverridesForYear) {
@@ -1539,8 +1667,8 @@ function drawLeasingChart() {
     return;
   }
   wrap.style.display = 'block';
+  buildLeasingFuelRows();
 
-  var tco = LEASING_TCO[country];
   var preds = SCENARIO[cat][country];
   var FUEL_MAP = {
     'Petrol': 'Proportion of Vehicles that are Petrol',
@@ -1577,11 +1705,11 @@ function drawLeasingChart() {
         if (!rows.length) rows = pinfo.historical.filter(function(r){return r.year===yr;});
         prop = rows.length ? rows.reduce(function(s,r){return s+r.value;},0)/rows.length : 0;
       }
-      cost += prop * (tco[ft] || 0);
+      cost += prop * getLeasingTCO(ft) * getLeasingR(ft);
     });
 
-    // Annual fleet cost = A * weighted_TCO_per_vehicle * 10000 * 4 quarters * R
-    var annualFleet = A * cost * 10000 * 4 * leasingR;
+    // Annual fleet cost = A * sum(prop_ft * TCO_ft * R_ft) * 10000 * 4 quarters
+    var annualFleet = A * cost * 10000 * 4;
     if (leasingPerVehicle) {
       // Per vehicle = total fleet / number of vehicles
       var numVehicles = A * 10000;
@@ -1627,10 +1755,6 @@ function drawLeasingChart() {
   }
 
   document.getElementById('leasingChartTitle').textContent = country + ' — Estimated Leasing Cost';
-  document.getElementById('leasingChartSub').textContent = leasingPerVehicle
-    ? 'USD / vehicle / year · Weighted avg TCO × 4 quarters × R'
-    : 'USD / year (total fleet) · A × 10,000 × weighted TCO × 4 quarters × R';
-  document.getElementById('leasingRVal').textContent = Math.round(leasingR*100) + '%';
 
   var scenLegend = document.getElementById('leasingScenLegend');
   if (scenLegend) scenLegend.style.display = scenData ? 'flex' : 'none';
@@ -2287,14 +2411,8 @@ if (leasingPVBtn) {
   };
 }
 // R slider
-var rSlider = document.getElementById('leasingRSlider');
-if (rSlider) {
-  rSlider.oninput = function() {
-    leasingR = parseFloat(this.value);
-    document.getElementById('leasingRVal').textContent = Math.round(leasingR*100) + '%';
-    drawLeasingChart();
-  };
-}
+// Reset leasing sliders when country changes — handled in selectCountry via resetLeasingSliders()
+// Fuel row sliders are wired dynamically in buildLeasingFuelRows()
 </script>
 </body>
 </html>
